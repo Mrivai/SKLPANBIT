@@ -9,7 +9,7 @@ export default function App() {
 
   useEffect(() => {
     // In dev environment or specific domains
-    if (host.includes('docusign') || window.location.search.includes('mode=verify')) {
+    if (host.includes('docusign') || host.includes('panbitsignature') || window.location.search.includes('mode=verify') || window.location.search.includes('data=')) {
       setIsDocusign(true);
     } else {
       setIsDocusign(false);

@@ -74,7 +74,7 @@ export function VerificationPage() {
             <div className="bg-slate-900 p-1.5 rounded-md">
               <ShieldCheck className="w-4 h-4 text-white" />
             </div>
-            <span className="text-sm font-bold text-slate-900 tracking-tight uppercase">DocuSign Verify</span>
+            <span className="text-sm font-bold text-slate-900 tracking-tight uppercase">Panbit Verify</span>
           </div>
           <div className="text-[9px] uppercase font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded border border-emerald-100 flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Terverifikasi
@@ -143,7 +143,7 @@ export function VerificationPage() {
         </section>
 
         <div className="text-center text-slate-300 text-[9px] uppercase font-bold tracking-[0.4em] pt-12">
-          Secured by DocuSign AES-256
+          Secured by Panbit Signature AES-256
         </div>
       </main>
     </div>
