@@ -7,6 +7,7 @@ export function VerificationPage() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
   const ttsPlayed = useRef(false);
+  const isQueued = useRef(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -16,8 +17,9 @@ export function VerificationPage() {
       if (decrypted) {
         setData(decrypted);
         
-        const tryPlay = () => {
-           playTTS(decrypted);
+        const tryPlay = (fromInteraction = false) => {
+           if (ttsPlayed.current || (isQueued.current && !fromInteraction)) return;
+           playTTS(decrypted, fromInteraction);
         };
 
         let checkVoices: any;
@@ -40,21 +42,17 @@ export function VerificationPage() {
         // Global interaction fallback (browsers block autoplay speech)
         const handleInteraction = () => {
           window.speechSynthesis.resume();
-          tryPlay();
-          if (ttsPlayed.current) {
-            window.removeEventListener('click', handleInteraction);
-            window.removeEventListener('touchstart', handleInteraction);
-            window.removeEventListener('mousedown', handleInteraction);
-            window.removeEventListener('pointerdown', handleInteraction);
-            window.removeEventListener('scroll', handleInteraction);
+          if (!ttsPlayed.current) {
+            tryPlay(true);
           }
+          // Once it successfully starts (or we've tried with interaction), we can eventually remove listeners
         };
 
-        window.addEventListener('click', handleInteraction, { once: false });
-        window.addEventListener('touchstart', handleInteraction, { once: false });
-        window.addEventListener('mousedown', handleInteraction, { once: false });
-        window.addEventListener('pointerdown', handleInteraction, { once: false });
-        window.addEventListener('scroll', handleInteraction, { once: false, passive: true });
+        window.addEventListener('click', handleInteraction);
+        window.addEventListener('touchstart', handleInteraction);
+        window.addEventListener('mousedown', handleInteraction);
+        window.addEventListener('pointerdown', handleInteraction);
+        window.addEventListener('scroll', handleInteraction, { passive: true });
         
         return () => {
           if (checkVoices) clearInterval(checkVoices);
@@ -76,9 +74,6 @@ export function VerificationPage() {
   const playTTS = (item: any, force = false) => {
     if (!item || !window.speechSynthesis) return;
     if (ttsPlayed.current && !force) return;
-
-    // Set flag immediately to prevent double execution
-    if (!force) ttsPlayed.current = true;
 
     try {
       window.speechSynthesis.cancel();
@@ -104,15 +99,22 @@ export function VerificationPage() {
       utterance.pitch = 1.0;
       
       utterance.onstart = () => {
-        // Flag is now set at the beginning of playTTS
+        ttsPlayed.current = true;
+        isQueued.current = false;
       };
 
+      utterance.onerror = () => {
+        isQueued.current = false;
+      };
+
+      isQueued.current = true;
       // Small delay helps browsers process cancel() and voice loading on mobile
       setTimeout(() => {
         window.speechSynthesis.speak(utterance);
       }, 100);
     } catch (e) {
       console.error("Speech Synthesis Error:", e);
+      isQueued.current = false;
     }
   };
 
