@@ -46,15 +46,21 @@ export function VerificationPage() {
           if (ttsPlayed.current) {
             window.removeEventListener('click', handleInteraction);
             window.removeEventListener('touchstart', handleInteraction);
+            window.removeEventListener('mousedown', handleInteraction);
+            window.removeEventListener('pointerdown', handleInteraction);
           }
         };
 
         window.addEventListener('click', handleInteraction, { once: false });
         window.addEventListener('touchstart', handleInteraction, { once: false });
+        window.addEventListener('mousedown', handleInteraction, { once: false });
+        window.addEventListener('pointerdown', handleInteraction, { once: false });
         
         return () => {
           window.removeEventListener('click', handleInteraction);
           window.removeEventListener('touchstart', handleInteraction);
+          window.removeEventListener('mousedown', handleInteraction);
+          window.removeEventListener('pointerdown', handleInteraction);
           window.speechSynthesis.onvoiceschanged = null;
         };
       } else {
@@ -168,13 +174,6 @@ export function VerificationPage() {
           </motion.div>
           <h1 className="text-xl font-black text-slate-900 mb-1 uppercase tracking-tight">Status Validasi Dokumen</h1>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tahun Pelajaran {data.sy}</p>
-          <button 
-            onClick={() => playTTS(data, true)}
-            className="mt-4 inline-flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-100 opacity-80 hover:opacity-100 hover:bg-white transition-all cursor-pointer active:scale-95"
-          >
-             <Volume2 className="w-3.5 h-3.5 text-blue-500" />
-             <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Audio konfirmasi aktif</span>
-          </button>
         </header>
 
         <section className="space-y-4">
