@@ -7,13 +7,15 @@ import {
 import { 
   Users, Settings, LogOut, Plus, Upload, Download, 
   Search, Trash2, Edit2, Save, X, Shield, BarChart3,
-  CheckCircle, XCircle
+  CheckCircle, XCircle, LayoutTemplate, Image as ImageIcon, Type
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 
+import { TemplateEditor } from './TemplateEditor';
+
 export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'stats' | 'students' | 'settings'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'students' | 'template' | 'settings'>('stats');
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -200,6 +202,12 @@ export function AdminDashboard() {
             onClick={() => setActiveTab('students')} 
           />
           <NavItem 
+            active={activeTab === 'template'} 
+            icon={<LayoutTemplate className="w-4 h-4" />} 
+            label="Template Editor" 
+            onClick={() => setActiveTab('template')} 
+          />
+          <NavItem 
             active={activeTab === 'settings'} 
             icon={<Settings className="w-4 h-4" />} 
             label="Pengaturan" 
@@ -239,6 +247,7 @@ export function AdminDashboard() {
         <div className="p-6 flex-1 overflow-y-auto">
           {activeTab === 'stats' && <StatsView />}
           {activeTab === 'students' && <StudentManager />}
+          {activeTab === 'template' && <TemplateEditor />}
           {activeTab === 'settings' && <SettingsManager />}
         </div>
       </main>

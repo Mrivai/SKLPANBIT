@@ -4,7 +4,8 @@ import { db } from '../../lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { format, isAfter, isBefore } from 'date-fns';
 import { generateSKL } from '../../lib/pdfGenerator';
-import { GraduationCap, Clock, Shield, Search, AlertCircle, Download } from 'lucide-react';
+import { GraduationCap, Clock, Shield, Search, AlertCircle, Download, FileText } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 export function StudentPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -197,81 +198,149 @@ function TimeUnit({ value, label }: { value: number, label: string }) {
 }
 
 function EnvelopeAnimation({ student, settings, isOpen, setIsOpen }: any) {
+  useEffect(() => {
+    if (isOpen && student.status === 'LULUS') {
+      const duration = 2 * 1000;
+      const animationEnd = Date.now() + duration;
+
+      const particleDefaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 60 };
+
+      const interval: any = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        confetti(Object.assign({}, particleDefaults, { 
+          particleCount,
+          origin: { x: Math.random() - 0.2, y: Math.random() - 0.2 }
+        }));
+        confetti(Object.assign({}, particleDefaults, { 
+          particleCount,
+          origin: { x: Math.random() + 0.2, y: Math.random() - 0.2 }
+        }));
+      }, 250);
+
+      // Initial big pop
+      confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 },
+        zIndex: 60
+      });
+
+      return () => clearInterval(interval);
+    }
+  }, [isOpen, student.status]);
+
   return (
     <div className="flex flex-col items-center">
-       <div className="relative w-full max-w-lg aspect-[4/3] flex items-center justify-center perspective-1000">
+       <div className="relative w-full max-w-lg aspect-[4/3] flex items-center justify-center perspective-1000 mt-8">
          <AnimatePresence mode="wait">
            {!isOpen ? (
              <motion.div 
                key="envelope"
-               exit={{ y: 200, opacity: 0, scale: 0.8 }}
+               exit={{ y: 0, opacity: 0, scale: 0.8 }}
                onClick={() => setIsOpen(true)}
                className="cursor-pointer group relative"
              >
-                <div className="absolute -inset-4 bg-orange-400/20 blur-2xl group-hover:bg-orange-400/30 transition-all rounded-full" />
+                <div className="absolute -inset-8 bg-blue-500/10 blur-3xl group-hover:bg-blue-500/20 transition-all rounded-full" />
                 <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-72 h-44 bg-white border border-slate-200 rounded shadow-xl relative flex items-center justify-center overflow-hidden"
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-80 h-52 bg-[#f4f4f5] shadow-2xl relative overflow-hidden rounded-md transition-all"
+                  style={{
+                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 20px rgba(0,0,0,0.05) inset"
+                  }}
                 >
-                  {/* Flap */}
-                  <div className="absolute top-0 left-0 right-0 h-1/2 bg-slate-50 origin-top z-10 border-b border-slate-100" style={{ clipPath: 'polygon(0 0, 100% 0, 50% 100%)' }}></div>
-                  
-                  <div className="text-center px-6 relative z-0">
-                    <p className="text-[9px] uppercase tracking-widest mb-1 font-bold text-slate-300">Penerima</p>
-                    <p className="font-bold text-sm text-slate-800 uppercase tracking-tight">{student.name}</p>
-                    <div className="mt-4 inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-3 py-1 rounded">
-                      Klik untuk Buka
-                    </div>
+                  {/* Inner Letter slightly poking out visually */}
+                  <div className="absolute top-2 left-2 right-2 bottom-2 bg-white flex flex-col justify-center items-center py-6 border border-slate-100 shadow-sm rounded-sm">
+                    <FileText className="w-8 h-8 text-blue-100 mb-2" />
+                    <p className="text-[9px] uppercase font-bold text-slate-400 tracking-widest mb-1">Surat Keputusan</p>
+                    <p className="font-black text-xs text-slate-800 uppercase tracking-tight text-center px-4 line-clamp-2">{student.name}</p>
+                  </div>
+
+                  {/* Envelope Flaps */}
+                  {/* Left Flap */}
+                  <div className="absolute inset-0 bg-[#e4e4e7] z-10" style={{ clipPath: 'polygon(0 0, 50% 50%, 0 100%)', filter: 'drop-shadow(2px 0 2px rgba(0,0,0,0.05))' }} />
+                  {/* Right Flap */}
+                  <div className="absolute inset-0 bg-[#e4e4e7] z-10" style={{ clipPath: 'polygon(100% 0, 50% 50%, 100% 100%)', filter: 'drop-shadow(-2px 0 2px rgba(0,0,0,0.05))' }} />
+                  {/* Bottom Flap */}
+                  <div className="absolute inset-0 bg-[#d4d4d8] z-20" style={{ clipPath: 'polygon(0 100%, 50% 50%, 100% 100%)', filter: 'drop-shadow(0 -2px 2px rgba(0,0,0,0.05))' }} />
+                  {/* Top Flap */}
+                  <div className="absolute inset-0 bg-[#fafafa] z-30 origin-top" style={{ clipPath: 'polygon(0 0, 100% 0, 50% 55%)', filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.08))' }} />
+
+                  {/* Wax Seal */}
+                  <div className="absolute left-1/2 top-[55%] -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-red-600 rounded-full shadow-lg border-2 border-red-700 flex items-center justify-center text-red-200 z-40 group-hover:scale-110 transition-transform">
+                    <GraduationCap className="w-6 h-6" />
+                  </div>
+
+                  <div className="absolute bottom-4 left-0 w-full text-center z-40 pointer-events-none">
+                    <span className="text-[9px] uppercase font-bold tracking-widest bg-slate-900/80 text-white px-4 py-1.5 rounded-full shadow-md backdrop-blur-md">Klik Buka Surat</span>
                   </div>
                 </motion.div>
              </motion.div>
            ) : (
              <motion.div 
                key="content"
-               initial={{ y: 20, opacity: 0 }}
-               animate={{ y: 0, opacity: 1 }}
-               className="w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200"
+               initial={{ y: 40, opacity: 0, scale: 0.9 }}
+               animate={{ y: 0, opacity: 1, scale: 1 }}
+               exit={{ y: -40, opacity: 0 }}
+               transition={{ type: "spring", stiffness: 200, damping: 20 }}
+               className="w-full bg-white rounded-2xl shadow-2xl shadow-slate-200/50 overflow-hidden border border-slate-100"
              >
-                <div className={`h-2 ${student.status === 'LULUS' ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                <div className="p-10 text-center">
-                  <h3 className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-4">Hasil Keputusan Kelulusan</h3>
-                  <div className="h-px w-8 bg-slate-100 mx-auto mb-6" />
+                <div className={`h-2 ${student.status === 'LULUS' ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 'bg-gradient-to-r from-red-400 to-red-600'}`} />
+                <div className="p-10 text-center relative overflow-hidden">
                   
-                  <p className="text-lg font-black text-slate-800 uppercase tracking-tight leading-none mb-1">{student.name}</p>
-                  <p className="text-xs font-bold text-slate-400 mb-10">NISN: {student.nisn}</p>
+                  {student.status === 'LULUS' && (
+                     <div className="absolute top-0 right-0 p-4 opacity-10 blur-xl pointer-events-none">
+                        <div className="w-32 h-32 bg-emerald-500 rounded-full" />
+                     </div>
+                  )}
 
-                  <div className="mb-12">
+                  <h3 className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-4 relative z-10">Hasil Keputusan Kelulusan</h3>
+                  <div className="h-px w-8 bg-slate-200 mx-auto mb-6 relative z-10" />
+                  
+                  <p className="text-lg font-black text-slate-800 uppercase tracking-tight leading-none mb-1 relative z-10">{student.name}</p>
+                  <p className="text-xs font-bold text-slate-400 mb-10 relative z-10">NISN: {student.nisn}</p>
+
+                  <div className="mb-12 relative z-10">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-4">DINYATAKAN</p>
                     <motion.div 
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className={`text-6xl font-black italic tracking-tighter ${student.status === 'LULUS' ? 'text-emerald-600' : 'text-red-600'}`}
+                      initial={{ scale: 0.5, opacity: 0, rotate: -5 }}
+                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                      transition={{ delay: 0.2, type: "spring", stiffness: 150 }}
+                      className={`text-5xl md:text-6xl font-black italic tracking-tighter drop-shadow-sm ${student.status === 'LULUS' ? 'text-emerald-500' : 'text-red-500'}`}
                     >
                       {student.status.replace('_', ' ')}
                     </motion.div>
                   </div>
 
-                  {student.status === 'LULUS' ? (
-                    <button 
-                      onClick={() => generateSKL(student, settings)}
-                      className="inline-flex items-center gap-2 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-xl font-bold shadow-xl shadow-slate-100 transition-all transform hover:-translate-y-1 text-xs uppercase tracking-widest"
-                    >
-                      <Download className="w-4 h-4" /> Simpan Dokumen SKL
-                    </button>
-                  ) : (
-                    <div className="p-4 bg-red-50 text-red-700 rounded-xl text-xs font-bold italic border border-red-100">
-                      Silakan hubungi bagian kurikulum untuk informasi lebih lanjut.
-                    </div>
-                  )}
+                  <div className="relative z-10">
+                    {student.status === 'LULUS' ? (
+                      <button 
+                        onClick={() => generateSKL(student, settings)}
+                        className="inline-flex items-center gap-2 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-black hover:to-black text-white px-8 py-4 rounded-xl font-bold shadow-xl shadow-slate-200 transition-all transform hover:-translate-y-1 text-xs uppercase tracking-widest"
+                      >
+                        <Download className="w-4 h-4" /> Simpan Dokumen SKL
+                      </button>
+                    ) : (
+                      <div className="p-4 bg-red-50 text-red-700 mx-auto max-w-sm rounded-xl text-xs font-bold border border-red-100 flex items-center gap-3">
+                        <AlertCircle className="w-5 h-5 shrink-0" />
+                        <span className="text-left">Silakan hubungi bagian kurikulum sekolah untuk informasi lebih lanjut.</span>
+                      </div>
+                    )}
+                  </div>
                   
-                  <div className="mt-12 pt-8 border-t border-slate-50 grid grid-cols-2 gap-4 text-left">
+                  <div className="mt-12 pt-8 border-t border-slate-50 grid grid-cols-2 gap-4 text-left relative z-10">
                     <div className="space-y-1">
                       <p className="text-[9px] text-slate-300 font-bold uppercase tracking-wider">Lembaga</p>
                       <p className="text-[11px] font-bold text-slate-600 truncate">{settings.schoolName}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[9px] text-slate-300 font-bold uppercase tracking-wider">Tahun</p>
+                      <p className="text-[9px] text-slate-300 font-bold uppercase tracking-wider">Tahun Pelajaran</p>
                       <p className="text-[11px] font-bold text-slate-600">{settings.schoolYear}</p>
                     </div>
                   </div>
@@ -281,14 +350,19 @@ function EnvelopeAnimation({ student, settings, isOpen, setIsOpen }: any) {
          </AnimatePresence>
        </div>
        
-       {isOpen && (
-         <button 
-           onClick={() => setIsOpen(false)}
-           className="mt-8 text-gray-400 hover:text-gray-600 text-sm font-medium transition-colors"
-         >
-           Tutup Pengumuman
-         </button>
-       )}
+       <AnimatePresence>
+         {isOpen && (
+           <motion.button 
+             initial={{ opacity: 0, y: 10 }}
+             animate={{ opacity: 1, y: 0 }}
+             exit={{ opacity: 0 }}
+             onClick={() => setIsOpen(false)}
+             className="mt-8 text-slate-400 hover:text-slate-600 text-xs font-bold uppercase tracking-widest transition-colors"
+           >
+             Tutup Pengumuman
+           </motion.button>
+         )}
+       </AnimatePresence>
     </div>
   );
 }
