@@ -74,33 +74,76 @@ export function AdminDashboard() {
           {!auth.currentUser ? (
             <>
               <p className="text-gray-500 mb-8">Silakan masuk untuk mengelola pengumuman.</p>
-              <button 
-                onClick={async () => {
-                  try {
-                    const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
-                    const provider = new GoogleAuthProvider();
-                    // Optional: add custom parameters if needed
-                    // provider.setCustomParameters({ prompt: 'select_account' });
-                    await signInWithPopup(auth, provider);
-                  } catch (err: any) {
-                    console.error("Login Error:", err);
-                    if (err.code === 'auth/popup-blocked') {
-                      alert("Popup login diblokir oleh browser. Silakan izinkan popup atau buka aplikasi di tab baru.");
-                    } else if (err.code === 'auth/cancelled-popup-request' || err.code === 'auth/popup-closed-by-user') {
-                      // Normal cancellation, don't alert
-                    } else {
-                      alert("Gagal masuk: " + err.message + "\n\nTip: Jika popup tertutup otomatis, silakan klik ikon 'Buka di Tab Baru' (bola dunia) di pojok kanan bawah preview AI Studio.");
+              <div className="space-y-4">
+                <button 
+                  onClick={async () => {
+                    try {
+                      const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+                      const provider = new GoogleAuthProvider();
+                      await signInWithPopup(auth, provider);
+                    } catch (err: any) {
+                      console.error("Login Error:", err);
+                      if (err.code === 'auth/popup-blocked') {
+                        alert("Popup login diblokir oleh browser. Silakan izinkan popup.");
+                      } else if (err.code === 'auth/unauthorized-domain') {
+                        alert("Domain '" + window.location.hostname + "' belum terdaftar di Firebase Authorized Domains.");
+                      } else if (err.code === 'auth/operation-not-allowed') {
+                        alert("Metode Login Google belum di-aktifkan di Firebase Console > Authentication > Sign-in Method.");
+                      } else {
+                        alert("Gagal: " + err.message);
+                      }
                     }
-                  }
-                }}
-                className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all"
-              >
-                Masuk dengan Google
-              </button>
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100 flex items-start gap-2 text-left">
-                <div className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0">ℹ️</div>
-                <p className="text-[10px] text-blue-700 font-medium leading-relaxed">
-                  Jika popup login menutup otomatis tanpa hasil, silakan klik tombol <b>Buka di Tab Baru</b> (ikon bola dunia di pojok kanan bawah) lalu coba login kembali di sana. Hal ini terjadi karena batasan keamanan browser pada sistem preview (iframe).
+                  }}
+                  className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-100 flex items-center justify-center gap-3 hover:bg-blue-700 transition-all active:scale-95"
+                >
+                  <img src="https://www.google.com/favicon.ico" className="w-5 h-5 bg-white rounded-full p-0.5" alt="Google" />
+                  Masuk dengan Google (Popup)
+                </button>
+
+                <div className="relative py-2">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+                  <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest text-slate-300 bg-white px-4">Atau Jika Bermasalah</div>
+                </div>
+
+                <button 
+                  onClick={async () => {
+                    try {
+                      const { GoogleAuthProvider, signInWithRedirect } = await import('firebase/auth');
+                      const provider = new GoogleAuthProvider();
+                      await signInWithRedirect(auth, provider);
+                    } catch (err: any) {
+                      alert("Gagal: " + err.message);
+                    }
+                  }}
+                  className="w-full bg-white text-slate-600 font-bold py-3 rounded-xl border border-slate-200 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all text-xs"
+                >
+                  Gunakan Metode Redirect
+                </button>
+              </div>
+
+              <div className="mt-8 space-y-3 text-left">
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping" /> Panduan Firebase Console
+                  </p>
+                  <ul className="space-y-2.5">
+                    <li className="flex gap-2 text-[11px] text-slate-600 leading-relaxed">
+                      <span className="font-bold text-blue-600">1.</span>
+                      <span>Di Firebase Console, buka menu <b>Build</b> &gt; <b>Authentication</b>.</span>
+                    </li>
+                    <li className="flex gap-2 text-[11px] text-slate-600 leading-relaxed">
+                      <span className="font-bold text-blue-600">2.</span>
+                      <span>Klik <b>Get Started</b> lalu aktifkan (Enable) <b>Google</b> di tab Sign-in Method.</span>
+                    </li>
+                    <li className="flex gap-2 text-[11px] text-slate-600 leading-relaxed">
+                      <span className="font-bold text-blue-600">3.</span>
+                      <span>Di tab <b>Settings</b> &gt; <b>Authorized Domains</b>, tambahkan domain: <code className="bg-slate-200 px-1 rounded text-slate-800 font-bold">{window.location.hostname}</code></span>
+                    </li>
+                  </ul>
+                </div>
+
+                <p className="text-[10px] text-center text-slate-400 italic">
+                  *Gunakan tombol "Buka di Tab Baru" (ikon bola dunia) jika Anda sedang di sistem Preview AI Studio.
                 </p>
               </div>
             </>
@@ -311,19 +354,30 @@ function StatCard({ label, value, icon, sub, badge, badgeColor, valueColor }: an
 function StudentManager() {
   const [students, setStudents] = useState<any[]>([]);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setSearchLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentStudent, setCurrentStudent] = useState<any>(null);
+  const [settings, setSettings] = useState<any>(null);
 
   const fetchStudents = async () => {
-    setLoading(true);
+    setSearchLoading(true);
     const snap = await getDocs(collection(db, 'students'));
     setStudents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    setLoading(false);
+    setSearchLoading(false);
   };
 
-  useEffect(() => { fetchStudents(); }, []);
+  useEffect(() => { 
+    fetchStudents(); 
+    const fetchSettings = async () => {
+      const sSnap = await getDoc(doc(db, 'settings', 'config'));
+      if (sSnap.exists()) setSettings(sSnap.data());
+    };
+    fetchSettings();
+  }, []);
 
   const handleImport = (e: any) => {
     const file = e.target.files[0];
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = async (evt: any) => {
       const bstr = evt.target.result;
@@ -333,17 +387,17 @@ function StudentManager() {
       
       const batch = writeBatch(db);
       for (const row of data) {
-         const id = row.NISN.toString();
+         const id = (row.NISN || row.nisn || Math.random().toString(36).substr(2, 9)).toString();
          const docRef = doc(db, 'students', id);
          batch.set(docRef, {
-           name: row.NAME,
-           nisn: row.NISN.toString(),
-           nis: row.NIS?.toString() || '',
-           status: row.STATUS || 'LULUS',
-           birthPlace: row.BIRTH_PLACE || '',
-           birthDate: row.BIRTH_DATE || '',
-           schoolYear: row.SCHOOL_YEAR || '2023/2024'
-         });
+           name: (row.NAME || row.name || 'TANPA NAMA').toUpperCase(),
+           nisn: id,
+           nis: (row.NIS || row.nis || '').toString(),
+           status: (row.STATUS || row.status || 'LULUS').toUpperCase(),
+           birthPlace: row.BIRTH_PLACE || row.birthPlace || '',
+           birthDate: row.BIRTH_DATE || row.birthDate || '',
+           schoolYear: row.SCHOOL_YEAR || row.schoolYear || settings?.schoolYear || '2023/2024'
+         }, { merge: true });
       }
       await batch.commit();
       fetchStudents();
@@ -366,9 +420,33 @@ function StudentManager() {
     }
   };
 
+  const handleSaveStudent = async (e: any) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    try {
+      const id = data.nisn as string;
+      await setDoc(doc(db, 'students', id), {
+        name: (data.name as string).toUpperCase(),
+        nisn: id,
+        nis: data.nis as string,
+        status: data.status as string,
+        birthPlace: data.birthPlace as string,
+        birthDate: data.birthDate as string,
+        schoolYear: settings?.schoolYear || '2023/2024'
+      });
+      setIsModalOpen(false);
+      fetchStudents();
+      alert("Data siswa disimpan!");
+    } catch (err) {
+      alert("Gagal menyimpan: " + err);
+    }
+  };
+
   const filtered = students.filter(s => 
-    s.name.toLowerCase().includes(search.toLowerCase()) || 
-    s.nisn.includes(search)
+    (s.name || '').toLowerCase().includes(search.toLowerCase()) || 
+    (s.nisn || '').includes(search)
   );
 
   return (
@@ -400,11 +478,66 @@ function StudentManager() {
           <button onClick={handleExport} className="bg-white border border-slate-200 text-slate-700 px-3 py-1.5 rounded text-[11px] font-bold flex items-center gap-2 hover:bg-slate-50 shadow-sm uppercase tracking-wider">
             <Download className="w-3.5 h-3.5" /> EXPORT
           </button>
-          <button className="bg-emerald-600 text-white px-3 py-1.5 rounded text-[11px] font-bold flex items-center gap-2 hover:bg-emerald-700 shadow-sm uppercase tracking-wider">
+          <button 
+            onClick={() => {
+              setCurrentStudent(null);
+              setIsModalOpen(true);
+            }}
+            className="bg-emerald-600 text-white px-3 py-1.5 rounded text-[11px] font-bold flex items-center gap-2 hover:bg-emerald-700 shadow-sm uppercase tracking-wider"
+          >
             <Plus className="w-3.5 h-3.5" /> TAMBAH SISWA
           </button>
         </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="font-black text-slate-900 uppercase tracking-widest text-sm">
+                {currentStudent ? 'Edit Data Siswa' : 'Tambah Siswa Baru'}
+              </h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5"/></button>
+            </div>
+            <form onSubmit={handleSaveStudent} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5 col-span-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nama Lengkap</label>
+                  <input name="name" defaultValue={currentStudent?.name} required className="w-full px-3 py-2 border border-slate-200 rounded text-xs uppercase" placeholder="CONTOH: BUDI SANTOSO" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">NISN (ID Login)</label>
+                  <input name="nisn" defaultValue={currentStudent?.nisn} required className="w-full px-3 py-2 border border-slate-200 rounded text-xs" placeholder="0081234567" disabled={!!currentStudent} />
+                  {currentStudent && <input type="hidden" name="nisn" value={currentStudent.nisn} />}
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">NIS</label>
+                  <input name="nis" defaultValue={currentStudent?.nis} className="w-full px-3 py-2 border border-slate-200 rounded text-xs" placeholder="12345" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tempat Lahir</label>
+                  <input name="birthPlace" defaultValue={currentStudent?.birthPlace} className="w-full px-3 py-2 border border-slate-200 rounded text-xs" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tanggal Lahir</label>
+                  <input name="birthDate" defaultValue={currentStudent?.birthDate} className="w-full px-3 py-2 border border-slate-200 rounded text-xs" placeholder="01 Januari 2008" />
+                </div>
+                <div className="space-y-1.5 col-span-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status Kelulusan</label>
+                  <select name="status" defaultValue={currentStudent?.status || 'LULUS'} className="w-full px-3 py-2 border border-slate-200 rounded text-xs bg-white">
+                    <option value="LULUS">LULUS</option>
+                    <option value="TIDAK_LULUS">TIDAK LULUS</option>
+                  </select>
+                </div>
+              </div>
+              <div className="pt-4 flex justify-end gap-2">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 rounded text-xs font-bold text-slate-500 uppercase tracking-widest hover:bg-slate-100">Batal</button>
+                <button type="submit" className="bg-blue-600 text-white px-8 py-2 rounded text-xs font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all uppercase tracking-widest">Simpan Data</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
         <div className="p-4 border-b border-slate-100 flex items-center gap-4 bg-slate-50/50">
@@ -444,9 +577,22 @@ function StudentManager() {
                     </span>
                   </td>
                   <td className="p-3 text-right">
-                    <div className="flex justify-end gap-2 opacity-10 group-hover:opacity-100 transition-opacity">
-                      <button className="text-blue-600 font-bold hover:underline">Edit</button>
-                      <button onClick={() => deleteStudent(s.id)} className="text-red-600 font-bold hover:underline">Hapus</button>
+                    <div className="flex justify-end gap-3 opacity-20 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => {
+                          setCurrentStudent(s);
+                          setIsModalOpen(true);
+                        }}
+                        className="text-blue-600 font-bold flex items-center gap-1 hover:underline"
+                      >
+                        <Edit2 className="w-3 h-3" /> Edit
+                      </button>
+                      <button 
+                        onClick={() => deleteStudent(s.id)} 
+                        className="text-red-600 font-bold flex items-center gap-1 hover:underline"
+                      >
+                        <Trash2 className="w-3 h-3" /> Hapus
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -455,12 +601,12 @@ function StudentManager() {
           </table>
         </div>
         
-        <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-500">
-           <span className="uppercase tracking-widest">Menampilkan {filtered.length} Siswa</span>
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+           <span>Menampilkan {filtered.length} Siswa</span>
            <div className="flex gap-1">
-               <button className="w-6 h-6 bg-white border border-slate-200 rounded flex items-center justify-center hover:bg-slate-50">‹</button>
-               <button className="w-6 h-6 bg-blue-600 text-white rounded flex items-center justify-center">1</button>
-               <button className="w-6 h-6 bg-white border border-slate-200 rounded flex items-center justify-center hover:bg-slate-50">›</button>
+               <button className="w-8 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50">‹</button>
+               <button className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center transition-all shadow-md shadow-blue-100">1</button>
+               <button className="w-8 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50">›</button>
            </div>
         </div>
       </div>
@@ -622,7 +768,27 @@ function SettingsManager() {
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end">
+          <div className="pt-4 flex justify-between gap-4">
+             <button 
+              type="button"
+              onClick={async () => {
+                const { generateSKL } = await import('../../lib/pdfGenerator');
+                const dummyStudent = {
+                  id: '0000000000',
+                  name: 'CONTOH NAMA SISWA LENGKAP',
+                  nisn: '0000000000',
+                  nis: '12345/678',
+                  status: 'LULUS',
+                  birthPlace: 'KOTA CONTOH',
+                  birthDate: '01 Januari 2008',
+                  school: settings.schoolName
+                };
+                generateSKL(dummyStudent, settings);
+              }}
+              className="flex items-center gap-2 bg-blue-50 text-blue-600 px-6 py-3 rounded text-xs font-bold border border-blue-100 hover:bg-blue-100 transition-all uppercase tracking-widest"
+            >
+              <Users className="w-4 h-4" /> Preview Template
+            </button>
             <button type="submit" className="flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded text-xs font-bold shadow-xl shadow-slate-200 hover:bg-black transition-all uppercase tracking-widest">
               <Save className="w-4 h-4" /> Simpan Konfigurasi
             </button>

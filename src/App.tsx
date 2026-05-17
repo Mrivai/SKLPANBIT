@@ -29,10 +29,17 @@ function Router() {
   const [page, setPage] = useState<'student' | 'admin'>('student');
   
   useEffect(() => {
-    // Check URL for admin
-    if (window.location.hash === '#admin') {
-      setPage('admin');
-    }
+    const handleHash = () => {
+      if (window.location.hash.includes('#admin')) {
+        setPage('admin');
+      } else {
+        setPage('student');
+      }
+    };
+
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
   return (
