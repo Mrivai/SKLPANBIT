@@ -24,7 +24,7 @@ Sub GenerateVerificationURL()
     token = Base64Encode(dataJson)
     
     ' Output URL ke kolom D
-    Range("D2").Value = "https://docusign.vercel.app/?data=" & token
+    Range("D2").Value = "https://panbitsignature.vercel.app/?data=" & token
 End Sub
 
 Function Base64Encode(ByVal sText As String) As String

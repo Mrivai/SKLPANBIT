@@ -105,7 +105,7 @@ export const generateSKL = async (student: any, settings: any) => {
     ts: Date.now()
   };
   const token = encryptData(verifyData);
-  const verifyUrl = `https://docusign.vercel.app/?data=${encodeURIComponent(token)}`;
+  const verifyUrl = `https://panbitsignature.vercel.app/?data=${encodeURIComponent(token)}`;
   
   try {
     const qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 200 });

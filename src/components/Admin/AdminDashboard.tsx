@@ -479,13 +479,16 @@ function StudentManager() {
             <Download className="w-3.5 h-3.5" /> EXPORT
           </button>
           <button 
-            onClick={() => {
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               setCurrentStudent(null);
               setIsModalOpen(true);
             }}
-            className="bg-emerald-600 text-white px-3 py-1.5 rounded text-[11px] font-bold flex items-center gap-2 hover:bg-emerald-700 shadow-sm uppercase tracking-wider"
+            className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-[11px] font-black flex items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-100 uppercase tracking-widest transition-all active:scale-95"
           >
-            <Plus className="w-3.5 h-3.5" /> TAMBAH SISWA
+            <Plus className="w-4 h-4" /> TAMBAH SISWA
           </button>
         </div>
       </div>
@@ -768,30 +771,39 @@ function SettingsManager() {
             </div>
           </div>
 
-          <div className="pt-4 flex justify-between gap-4">
-             <button 
-              type="button"
-              onClick={async () => {
-                const { generateSKL } = await import('../../lib/pdfGenerator');
-                const dummyStudent = {
-                  id: '0000000000',
-                  name: 'CONTOH NAMA SISWA LENGKAP',
-                  nisn: '0000000000',
-                  nis: '12345/678',
-                  status: 'LULUS',
-                  birthPlace: 'KOTA CONTOH',
-                  birthDate: '01 Januari 2008',
-                  school: settings.schoolName
-                };
-                generateSKL(dummyStudent, settings);
-              }}
-              className="flex items-center gap-2 bg-blue-50 text-blue-600 px-6 py-3 rounded text-xs font-bold border border-blue-100 hover:bg-blue-100 transition-all uppercase tracking-widest"
-            >
-              <Users className="w-4 h-4" /> Preview Template
-            </button>
-            <button type="submit" className="flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded text-xs font-bold shadow-xl shadow-slate-200 hover:bg-black transition-all uppercase tracking-widest">
-              <Save className="w-4 h-4" /> Simpan Konfigurasi
-            </button>
+          <div className="pt-8 mt-4 border-t border-slate-100">
+            <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2 mb-6">
+               <div className="w-1.5 h-1.5 bg-blue-600 rounded-full" /> Preview & Simpan
+            </h3>
+            <div className="flex flex-col sm:flex-row justify-between gap-4">
+               <button 
+                type="button"
+                onClick={async () => {
+                  try {
+                    const { generateSKL } = await import('../../lib/pdfGenerator');
+                    const dummyStudent = {
+                      id: '0000000000',
+                      name: 'CONTOH NAMA SISWA LENGKAP',
+                      nisn: '0000000000',
+                      nis: '12345/678',
+                      status: 'LULUS',
+                      birthPlace: 'KOTA CONTOH',
+                      birthDate: '01 Januari 2008',
+                      school: settings.schoolName || 'NAMA SEKOLAH BELUM DIATUR'
+                    };
+                    await generateSKL(dummyStudent, settings);
+                  } catch (err) {
+                    alert("Gagal preview: " + err);
+                  }
+                }}
+                className="flex items-center justify-center gap-2 bg-blue-50 text-blue-600 px-8 py-4 rounded-xl text-xs font-black border border-blue-100 hover:bg-blue-100 transition-all uppercase tracking-widest"
+              >
+                <Users className="w-4 h-4" /> Preview Template SKL
+              </button>
+              <button type="submit" className="flex items-center justify-center gap-2 bg-slate-900 text-white px-10 py-4 rounded-xl text-xs font-black shadow-2xl shadow-slate-200 hover:bg-black transition-all rotate-0 active:scale-95 uppercase tracking-widest">
+                <Save className="w-4 h-4" /> Simpan Perubahan
+              </button>
+            </div>
           </div>
         </div>
       </form>
