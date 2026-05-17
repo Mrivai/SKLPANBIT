@@ -15,25 +15,48 @@ export function VerificationPage() {
       const decrypted = decryptData(encrypted);
       if (decrypted) {
         setData(decrypted);
-        // On some browsers voices load asynchronously
+        
+        const tryPlay = () => {
+           if (window.speechSynthesis.speaking) return;
+           playTTS(decrypted);
+        };
+
+        // Try autoplay
         if (window.speechSynthesis.getVoices().length > 0) {
-          playTTS(decrypted);
+          tryPlay();
         } else {
+          const checkVoices = setInterval(() => {
+            if (window.speechSynthesis.getVoices().length > 0) {
+              tryPlay();
+              clearInterval(checkVoices);
+            }
+          }, 500);
           window.speechSynthesis.onvoiceschanged = () => {
-            playTTS(decrypted);
-            window.speechSynthesis.onvoiceschanged = null;
+            tryPlay();
+            clearInterval(checkVoices);
           };
+          setTimeout(() => clearInterval(checkVoices), 5000);
         }
 
         // Global interaction fallback (browsers block autoplay speech)
         const handleInteraction = () => {
-          if (!ttsPlayed.current) {
-            playTTS(decrypted);
+          // Essential for unlocking iOS/Chrome mobile speech
+          window.speechSynthesis.resume();
+          tryPlay();
+          if (ttsPlayed.current) {
+            window.removeEventListener('click', handleInteraction);
+            window.removeEventListener('touchstart', handleInteraction);
           }
-          window.removeEventListener('click', handleInteraction);
         };
-        window.addEventListener('click', handleInteraction);
-        return () => window.removeEventListener('click', handleInteraction);
+
+        window.addEventListener('click', handleInteraction, { once: false });
+        window.addEventListener('touchstart', handleInteraction, { once: false });
+        
+        return () => {
+          window.removeEventListener('click', handleInteraction);
+          window.removeEventListener('touchstart', handleInteraction);
+          window.speechSynthesis.onvoiceschanged = null;
+        };
       } else {
         setError('Token tidak valid atau rusak.');
       }
@@ -43,28 +66,40 @@ export function VerificationPage() {
   }, []);
 
   const playTTS = (item: any, force = false) => {
-    if (!item) return;
+    if (!item || !window.speechSynthesis) return;
     if (ttsPlayed.current && !force) return;
-    ttsPlayed.current = true;
 
     try {
-      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
+      window.speechSynthesis.resume();
 
       const text = `Selamat, verifikasi data berhasil atas nama ${item.n}. Siswa dinyatakan ${item.s === 'LULUS' ? 'Lulus' : 'Tidak Lulus'}.`;
       const utterance = new SpeechSynthesisUtterance(text);
       
-      // Get Indonesian voice if available
       const voices = window.speechSynthesis.getVoices();
-      const idVoice = voices.find(v => v.lang.includes('id'));
-      if (idVoice) utterance.voice = idVoice;
+      const idVoice = voices.find(v => v.lang.toLowerCase().includes('id')) || 
+                      voices.find(v => v.lang.toLowerCase().includes('en')) ||
+                      voices[0];
       
-      utterance.lang = 'id-ID';
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      utterance.volume = 1;
+      if (idVoice) {
+        utterance.voice = idVoice;
+        utterance.lang = idVoice.lang;
+      } else {
+        utterance.lang = 'id-ID';
+      }
       
-      window.speechSynthesis.speak(utterance);
+      utterance.rate = 0.95;
+      utterance.volume = 1.0;
+      utterance.pitch = 1.0;
+      
+      utterance.onstart = () => {
+        ttsPlayed.current = true;
+      };
+
+      // Small delay helps avoid collisions in the speech queue
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, 50);
     } catch (e) {
       console.error("Speech Synthesis Error:", e);
     }
@@ -133,10 +168,13 @@ export function VerificationPage() {
           </motion.div>
           <h1 className="text-xl font-black text-slate-900 mb-1 uppercase tracking-tight">Status Validasi Dokumen</h1>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tahun Pelajaran {data.sy}</p>
-          <div className="mt-4 inline-flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-100 opacity-60">
-             <Volume2 className="w-3.5 h-3.5 text-slate-400" />
-             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Audio konfirmasi aktif</span>
-          </div>
+          <button 
+            onClick={() => playTTS(data, true)}
+            className="mt-4 inline-flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-100 opacity-80 hover:opacity-100 hover:bg-white transition-all cursor-pointer active:scale-95"
+          >
+             <Volume2 className="w-3.5 h-3.5 text-blue-500" />
+             <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Audio konfirmasi aktif</span>
+          </button>
         </header>
 
         <section className="space-y-4">
