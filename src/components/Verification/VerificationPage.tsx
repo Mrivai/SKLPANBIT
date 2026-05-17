@@ -7,7 +7,6 @@ export function VerificationPage() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
   const ttsPlayed = useRef(false);
-  const isQueued = useRef(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -18,7 +17,7 @@ export function VerificationPage() {
         setData(decrypted);
         
         const tryPlay = (fromInteraction = false) => {
-           if (ttsPlayed.current || (isQueued.current && !fromInteraction)) return;
+           if (ttsPlayed.current) return;
            playTTS(decrypted, fromInteraction);
         };
 
@@ -41,15 +40,18 @@ export function VerificationPage() {
 
         // Global interaction fallback (browsers block autoplay speech)
         const handleInteraction = () => {
-          window.speechSynthesis.resume();
           if (!ttsPlayed.current) {
-            tryPlay(true);
+            playTTS(decrypted, true);
           }
-          // Once it successfully starts (or we've tried with interaction), we can eventually remove listeners
+          window.removeEventListener('click', handleInteraction);
+          window.removeEventListener('touchstart', handleInteraction);
+          window.removeEventListener('mousedown', handleInteraction);
+          window.removeEventListener('pointerdown', handleInteraction);
+          window.removeEventListener('scroll', handleInteraction);
         };
 
         window.addEventListener('click', handleInteraction);
-        window.addEventListener('touchstart', handleInteraction);
+        window.addEventListener('touchstart', handleInteraction, { passive: true });
         window.addEventListener('mousedown', handleInteraction);
         window.addEventListener('pointerdown', handleInteraction);
         window.addEventListener('scroll', handleInteraction, { passive: true });
@@ -100,21 +102,11 @@ export function VerificationPage() {
       
       utterance.onstart = () => {
         ttsPlayed.current = true;
-        isQueued.current = false;
       };
 
-      utterance.onerror = () => {
-        isQueued.current = false;
-      };
-
-      isQueued.current = true;
-      // Small delay helps browsers process cancel() and voice loading on mobile
-      setTimeout(() => {
-        window.speechSynthesis.speak(utterance);
-      }, 100);
+      window.speechSynthesis.speak(utterance);
     } catch (e) {
       console.error("Speech Synthesis Error:", e);
-      isQueued.current = false;
     }
   };
 
