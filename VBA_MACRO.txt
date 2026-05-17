@@ -1,0 +1,46 @@
+' --- VBA MACRO UNTUK EXCEL GENERATE QR TOKEN ---
+' Copy kode ini ke dalam Module di Excel
+' Membutuhkan referensi mscorlib.dll untuk Base64
+' Catatan: Untuk AES penuh di VBA sangat kompleks, 
+' Macro ini menyediakan logika dasar untuk menyusun URL yang sama.
+
+Sub GenerateVerificationURL()
+    Dim nisn As String
+    Dim nama As String
+    Dim status As String
+    Dim dataJson As String
+    Dim token As String
+    
+    ' Contoh ambil data dari cell
+    nisn = Range("B2").Value
+    nama = Range("A2").Value
+    status = Range("C2").Value ' LULUS / TIDAK_LULUS
+    
+    ' Susun format JSON sederhana
+    dataJson = "{""id"":""" & nisn & """,""n"":""" & nama & """,""s"":""" & status & """,""ts"":" & Timer * 1000 & "}"
+    
+    ' Encode ke Base64 (Sebagai pengganti enkripsi AES di VBA agar kompatibel)
+    ' Tips: Update di crypto.ts agar mendukung fallback Base64 jika AES gagal
+    token = Base64Encode(dataJson)
+    
+    ' Output URL ke kolom D
+    Range("D2").Value = "https://docusign.vercel.app/?data=" & token
+End Sub
+
+Function Base64Encode(ByVal sText As String) As String
+    Dim arrData() As Byte
+    arrData = StrConv(sText, vbFromUnicode)
+    
+    Dim objXML As Object
+    Dim objNode As Object
+    
+    Set objXML = CreateObject("MSXML2.DOMDocument.3.0")
+    Set objNode = objXML.createElement("b64")
+    
+    objNode.DataType = "bin.base64"
+    objNode.nodeTypedValue = arrData
+    Base64Encode = Replace(objNode.text, vbLf, "")
+    
+    Set objNode = Nothing
+    Set objXML = Nothing
+End Function

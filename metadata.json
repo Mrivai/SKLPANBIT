@@ -1,0 +1,8 @@
+{
+  "name": "E-Lulus & Verifikasi",
+  "description": "Sistem Pengumuman Kelulusan (SKL) Online dengan Fitur Verifikasi QR-Code dan TTS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

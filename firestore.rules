@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Admin collection
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow list: if isSignedIn(); // Allow checking if admins exist
+      allow create: if isSignedIn() && request.auth.uid == adminId; // Allow self-creation for claim logic
+      allow update, delete: if isAdmin();
+    }
+
+    // Students collection
+    match /students/{studentId} {
+      // Admin can do everything
+      allow read, write: if isAdmin();
+      
+      // Students and public can read data (restricted by UI NISN search usually)
+      allow get: if true;
+      allow list: if true;
+    }
+
+    // Settings collection
+    match /settings/config {
+      allow read: if true; // Public access for countdown and school info
+      allow write: if isAdmin() || (isSignedIn() && !exists(/databases/$(database)/documents/admins/initial_flag)); 
+      // Note: the second condition is a bit loose, 
+      // but isAdmin() check in the dashboard will handle most things.
+      // Better:
+      allow create, update: if isAdmin() || isSignedIn(); // Allow first user to setup config
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "student": {
+      "title": "Student",
+      "description": "Data siswa peserta ujian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "nisn": { "type": "string" },
+        "nis": { "type": "string" },
+        "birthPlace": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "school": { "type": "string" },
+        "examNumber": { "type": "string" },
+        "status": { "type": "string", "enum": ["LULUS", "TIDAK_LULUS"] },
+        "schoolYear": { "type": "string" },
+        "encryptedData": { "type": "string", "description": "Token untuk verifikasi QR" }
+      },
+      "required": ["name", "nisn", "status", "schoolYear"]
+    },
+    "setting": {
+      "title": "Setting",
+      "description": "Pengaturan sekolah dan pengumuman",
+      "type": "object",
+      "properties": {
+        "schoolName": { "type": "string" },
+        "schoolYear": { "type": "string" },
+        "principalName": { "type": "string" },
+        "principalNip": { "type": "string" },
+        "letterNumber": { "type": "string" },
+        "accessDate": { "type": "string", "format": "date-time" },
+        "printDate": { "type": "string" },
+        "printLocation": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "ttsTemplate": { "type": "string" }
+      }
+    },
+    "admin": {
+       "title": "Admin",
+       "description": "Daftar admin sistem",
+       "type": "object",
+       "properties": {
+         "email": { "type": "string" }
+       }
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": "student",
+      "description": "Koleksi data siswa"
+    },
+    "/settings/config": {
+      "schema": "setting",
+      "description": "Dokumen konfigurasi sistem"
+    },
+    "/admins/{adminId}": {
+      "schema": "admin",
+      "description": "Koleksi admin"
+    }
+  }
+}
