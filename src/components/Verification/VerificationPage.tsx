@@ -24,6 +24,16 @@ export function VerificationPage() {
             window.speechSynthesis.onvoiceschanged = null;
           };
         }
+
+        // Global interaction fallback (browsers block autoplay speech)
+        const handleInteraction = () => {
+          if (!ttsPlayed.current) {
+            playTTS(decrypted);
+          }
+          window.removeEventListener('click', handleInteraction);
+        };
+        window.addEventListener('click', handleInteraction);
+        return () => window.removeEventListener('click', handleInteraction);
       } else {
         setError('Token tidak valid atau rusak.');
       }
@@ -123,13 +133,10 @@ export function VerificationPage() {
           </motion.div>
           <h1 className="text-xl font-black text-slate-900 mb-1 uppercase tracking-tight">Status Validasi Dokumen</h1>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tahun Pelajaran {data.sy}</p>
-          <button 
-            onClick={() => playTTS(data, true)}
-            className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95"
-          >
-             <Volume2 className="w-4 h-4" />
-             <span className="text-[11px] font-black uppercase tracking-widest">Dengarkan Audio</span>
-          </button>
+          <div className="mt-4 inline-flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-100 opacity-60">
+             <Volume2 className="w-3.5 h-3.5 text-slate-400" />
+             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Audio konfirmasi aktif</span>
+          </div>
         </header>
 
         <section className="space-y-4">
