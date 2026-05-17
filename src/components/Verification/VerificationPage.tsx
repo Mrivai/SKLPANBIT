@@ -15,7 +15,15 @@ export function VerificationPage() {
       const decrypted = decryptData(encrypted);
       if (decrypted) {
         setData(decrypted);
-        playTTS(decrypted);
+        // On some browsers voices load asynchronously
+        if (window.speechSynthesis.getVoices().length > 0) {
+          playTTS(decrypted);
+        } else {
+          window.speechSynthesis.onvoiceschanged = () => {
+            playTTS(decrypted);
+            window.speechSynthesis.onvoiceschanged = null;
+          };
+        }
       } else {
         setError('Token tidak valid atau rusak.');
       }
@@ -24,16 +32,32 @@ export function VerificationPage() {
     }
   }, []);
 
-  const playTTS = (item: any) => {
-    if (ttsPlayed.current) return;
+  const playTTS = (item: any, force = false) => {
+    if (!item) return;
+    if (ttsPlayed.current && !force) return;
     ttsPlayed.current = true;
 
-    // We can use Web Speech API (free and built-in)
-    const text = `Selamat, kami verifikasi data atas nama ${item.n}. Siswa dinyatakan ${item.s === 'LULUS' ? 'Lulus' : 'Tidak Lulus'}.`;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'id-ID';
-    utterance.rate = 0.9;
-    window.speechSynthesis.speak(utterance);
+    try {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+
+      const text = `Selamat, verifikasi data berhasil atas nama ${item.n}. Siswa dinyatakan ${item.s === 'LULUS' ? 'Lulus' : 'Tidak Lulus'}.`;
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Get Indonesian voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const idVoice = voices.find(v => v.lang.includes('id'));
+      if (idVoice) utterance.voice = idVoice;
+      
+      utterance.lang = 'id-ID';
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.error("Speech Synthesis Error:", e);
+    }
   };
 
   const Card = ({ children, title, icon, color }: any) => (
@@ -99,10 +123,13 @@ export function VerificationPage() {
           </motion.div>
           <h1 className="text-xl font-black text-slate-900 mb-1 uppercase tracking-tight">Status Validasi Dokumen</h1>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tahun Pelajaran {data.sy}</p>
-          <div className="mt-4 inline-flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-             <Volume2 className="w-3.5 h-3.5 text-slate-500" />
-             <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Audio konfirmasi aktif</span>
-          </div>
+          <button 
+            onClick={() => playTTS(data, true)}
+            className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95"
+          >
+             <Volume2 className="w-4 h-4" />
+             <span className="text-[11px] font-black uppercase tracking-widest">Dengarkan Audio</span>
+          </button>
         </header>
 
         <section className="space-y-4">
