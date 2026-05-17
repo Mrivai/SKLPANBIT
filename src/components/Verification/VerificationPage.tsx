@@ -17,15 +17,14 @@ export function VerificationPage() {
         setData(decrypted);
         
         const tryPlay = () => {
-           if (window.speechSynthesis.speaking) return;
            playTTS(decrypted);
         };
 
-        // Try autoplay
+        let checkVoices: any;
         if (window.speechSynthesis.getVoices().length > 0) {
           tryPlay();
         } else {
-          const checkVoices = setInterval(() => {
+          checkVoices = setInterval(() => {
             if (window.speechSynthesis.getVoices().length > 0) {
               tryPlay();
               clearInterval(checkVoices);
@@ -33,14 +32,13 @@ export function VerificationPage() {
           }, 500);
           window.speechSynthesis.onvoiceschanged = () => {
             tryPlay();
-            clearInterval(checkVoices);
+            if (checkVoices) clearInterval(checkVoices);
           };
-          setTimeout(() => clearInterval(checkVoices), 5000);
+          setTimeout(() => { if (checkVoices) clearInterval(checkVoices); }, 5000);
         }
 
         // Global interaction fallback (browsers block autoplay speech)
         const handleInteraction = () => {
-          // Essential for unlocking iOS/Chrome mobile speech
           window.speechSynthesis.resume();
           tryPlay();
           if (ttsPlayed.current) {
@@ -57,6 +55,7 @@ export function VerificationPage() {
         window.addEventListener('pointerdown', handleInteraction, { once: false });
         
         return () => {
+          if (checkVoices) clearInterval(checkVoices);
           window.removeEventListener('click', handleInteraction);
           window.removeEventListener('touchstart', handleInteraction);
           window.removeEventListener('mousedown', handleInteraction);
@@ -74,6 +73,9 @@ export function VerificationPage() {
   const playTTS = (item: any, force = false) => {
     if (!item || !window.speechSynthesis) return;
     if (ttsPlayed.current && !force) return;
+
+    // Set flag immediately to prevent double execution
+    if (!force) ttsPlayed.current = true;
 
     try {
       window.speechSynthesis.cancel();
@@ -99,13 +101,11 @@ export function VerificationPage() {
       utterance.pitch = 1.0;
       
       utterance.onstart = () => {
-        ttsPlayed.current = true;
+        // Flag is now set at the beginning of playTTS
       };
 
-      // Small delay helps avoid collisions in the speech queue
-      setTimeout(() => {
-        window.speechSynthesis.speak(utterance);
-      }, 50);
+      // Small delay helped before, but now we use immediate flag setting
+      window.speechSynthesis.speak(utterance);
     } catch (e) {
       console.error("Speech Synthesis Error:", e);
     }
