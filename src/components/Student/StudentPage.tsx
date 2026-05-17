@@ -10,7 +10,17 @@ import confetti from 'canvas-confetti';
 export function StudentPage() {
   const [settings, setSettings] = useState<any>(null);
   const [nisn, setNisn] = useState('');
-  const [studentData, setStudentData] = useState<any>(null);
+  const [studentData, setStudentData] = useState<any>(() => {
+    const saved = localStorage.getItem('student_session');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -74,6 +84,7 @@ export function StudentPage() {
       } else {
         const student = querySnapshot.docs[0].data();
         setStudentData(student);
+        localStorage.setItem('student_session', JSON.stringify(student));
       }
     } catch (err) {
       setError('Terjadi kesalahan saat mencari data.');
@@ -200,6 +211,9 @@ function TimeUnit({ value, label }: { value: number, label: string }) {
 function EnvelopeAnimation({ student, settings, isOpen, setIsOpen }: any) {
   useEffect(() => {
     if (isOpen && student.status === 'LULUS') {
+      const audio = new Audio('/firework.mp3');
+      audio.play().catch(e => console.error("Audio playback error:", e));
+
       const duration = 2 * 1000;
       const animationEnd = Date.now() + duration;
 
