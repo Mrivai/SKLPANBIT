@@ -76,13 +76,33 @@ export function AdminDashboard() {
               <p className="text-gray-500 mb-8">Silakan masuk untuk mengelola pengumuman.</p>
               <button 
                 onClick={async () => {
-                  const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
-                  signInWithPopup(auth, new GoogleAuthProvider());
+                  try {
+                    const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+                    const provider = new GoogleAuthProvider();
+                    // Optional: add custom parameters if needed
+                    // provider.setCustomParameters({ prompt: 'select_account' });
+                    await signInWithPopup(auth, provider);
+                  } catch (err: any) {
+                    console.error("Login Error:", err);
+                    if (err.code === 'auth/popup-blocked') {
+                      alert("Popup login diblokir oleh browser. Silakan izinkan popup atau buka aplikasi di tab baru.");
+                    } else if (err.code === 'auth/cancelled-popup-request' || err.code === 'auth/popup-closed-by-user') {
+                      // Normal cancellation, don't alert
+                    } else {
+                      alert("Gagal masuk: " + err.message + "\n\nTip: Jika popup tertutup otomatis, silakan klik ikon 'Buka di Tab Baru' (bola dunia) di pojok kanan bawah preview AI Studio.");
+                    }
+                  }
                 }}
-                className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg"
+                className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all"
               >
                 Masuk dengan Google
               </button>
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100 flex items-start gap-2 text-left">
+                <div className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0">ℹ️</div>
+                <p className="text-[10px] text-blue-700 font-medium leading-relaxed">
+                  Jika popup login menutup otomatis tanpa hasil, silakan klik tombol <b>Buka di Tab Baru</b> (ikon bola dunia di pojok kanan bawah) lalu coba login kembali di sana. Hal ini terjadi karena batasan keamanan browser pada sistem preview (iframe).
+                </p>
+              </div>
             </>
           ) : dbEmpty ? (
             <>

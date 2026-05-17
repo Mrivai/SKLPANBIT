@@ -16,14 +16,23 @@ export function StudentPage() {
   const [timeLeft, setTimeLeft] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
 
+  const [isNotFound, setIsNotFound] = useState(false);
+
   useEffect(() => {
     const fetchSettings = async () => {
-      const docRef = doc(db, 'settings', 'config');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setSettings(data);
-        checkUnlock(data.accessDate);
+      try {
+        const docRef = doc(db, 'settings', 'config');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setSettings(data);
+          checkUnlock(data.accessDate);
+        } else {
+          setIsNotFound(true);
+        }
+      } catch (err) {
+        console.error(err);
+        setIsNotFound(true);
       }
     };
     fetchSettings();
@@ -72,7 +81,23 @@ export function StudentPage() {
     }
   };
 
-  if (!settings) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  if (isNotFound) return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6 text-center">
+      <div className="bg-white p-12 rounded-3xl shadow-xl border border-slate-200 max-w-md">
+        <Shield className="w-16 h-16 text-slate-300 mx-auto mb-6" />
+        <h1 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">Sistem Belum Siap</h1>
+        <p className="text-slate-400 text-sm mb-8 font-medium">Administrator belum melakukan konfigurasi awal pada aplikasi ini.</p>
+        <a href="#admin" className="inline-block bg-slate-900 text-white px-8 py-3 rounded-xl font-bold uppercase text-xs tracking-widest shadow-lg">Login Admin</a>
+      </div>
+    </div>
+  );
+
+  if (!settings) return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+      <div className="w-12 h-12 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin mb-4" />
+      <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Menghubungkan ke Server...</div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 border-t-4 border-blue-600">
