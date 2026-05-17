@@ -15,55 +15,86 @@ export function VerificationPage() {
       const decrypted = decryptData(encrypted);
       if (decrypted) {
         setData(decrypted);
-        
-        const tryPlay = (fromInteraction = false) => {
-           if (ttsPlayed.current) return;
-           playTTS(decrypted, fromInteraction);
+
+        const doSpeak = () => {
+          if (!window.speechSynthesis || ttsPlayed.current) return;
+
+          try {
+            // Cancel any pending speech so this one plays immediately
+            window.speechSynthesis.cancel();
+            
+            const text = `Selamat, verifikasi data berhasil atas nama ${decrypted.n}. Siswa dinyatakan ${decrypted.s === 'LULUS' ? 'Lulus' : 'Tidak Lulus'}.`;
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            const voices = window.speechSynthesis.getVoices();
+            const idVoice = voices.find(v => v.lang.toLowerCase().includes('id')) || 
+                            voices.find(v => v.lang.toLowerCase().includes('en')) ||
+                            voices[0];
+            
+            if (idVoice) {
+              utterance.voice = idVoice;
+              utterance.lang = idVoice.lang;
+            } else {
+              utterance.lang = 'id-ID';
+            }
+            
+            utterance.rate = 0.95;
+            utterance.volume = 1.0;
+            utterance.pitch = 1.0;
+            
+            utterance.onstart = () => {
+              ttsPlayed.current = true;
+            };
+
+            window.speechSynthesis.speak(utterance);
+          } catch (e) {
+            console.error("Speech Synthesis Error:", e);
+          }
         };
 
-        let checkVoices: any;
-        if (window.speechSynthesis.getVoices().length > 0) {
-          tryPlay();
-        } else {
-          checkVoices = setInterval(() => {
-            if (window.speechSynthesis.getVoices().length > 0) {
-              tryPlay();
-              clearInterval(checkVoices);
-            }
-          }, 500);
-          window.speechSynthesis.onvoiceschanged = () => {
-            tryPlay();
-            if (checkVoices) clearInterval(checkVoices);
-          };
-          setTimeout(() => { if (checkVoices) clearInterval(checkVoices); }, 5000);
-        }
+        // Try autoplay after a short delay (gives voices time to load)
+        const timer = setTimeout(() => {
+          doSpeak();
+        }, 800);
 
-        // Global interaction fallback (browsers block autoplay speech)
+        // Interaction fallback (mandatory for mobile/strict autoplay policies)
         const handleInteraction = () => {
           if (!ttsPlayed.current) {
-            playTTS(decrypted, true);
+            doSpeak();
           }
+          // Clean up listeners once played
+          if (ttsPlayed.current) {
+            removeListeners();
+          }
+        };
+
+        const removeListeners = () => {
           window.removeEventListener('click', handleInteraction);
           window.removeEventListener('touchstart', handleInteraction);
-          window.removeEventListener('mousedown', handleInteraction);
-          window.removeEventListener('pointerdown', handleInteraction);
           window.removeEventListener('scroll', handleInteraction);
+          window.removeEventListener('keydown', handleInteraction);
+          window.removeEventListener('pointerdown', handleInteraction);
         };
 
         window.addEventListener('click', handleInteraction);
         window.addEventListener('touchstart', handleInteraction, { passive: true });
-        window.addEventListener('mousedown', handleInteraction);
-        window.addEventListener('pointerdown', handleInteraction);
         window.addEventListener('scroll', handleInteraction, { passive: true });
-        
+        window.addEventListener('keydown', handleInteraction);
+        window.addEventListener('pointerdown', handleInteraction, { passive: true });
+
+        // Fetch voices early
+        if (window.speechSynthesis && window.speechSynthesis.getVoices().length === 0) {
+           window.speechSynthesis.onvoiceschanged = () => {
+             // Trigger loaded event
+           };
+        }
+
         return () => {
-          if (checkVoices) clearInterval(checkVoices);
-          window.removeEventListener('click', handleInteraction);
-          window.removeEventListener('touchstart', handleInteraction);
-          window.removeEventListener('mousedown', handleInteraction);
-          window.removeEventListener('pointerdown', handleInteraction);
-          window.removeEventListener('scroll', handleInteraction);
-          window.speechSynthesis.onvoiceschanged = null;
+          clearTimeout(timer);
+          removeListeners();
+          if (window.speechSynthesis) {
+             window.speechSynthesis.onvoiceschanged = null;
+          }
         };
       } else {
         setError('Token tidak valid atau rusak.');
@@ -72,43 +103,6 @@ export function VerificationPage() {
       setError('Data verifikasi tidak ditemukan.');
     }
   }, []);
-
-  const playTTS = (item: any, force = false) => {
-    if (!item || !window.speechSynthesis) return;
-    if (ttsPlayed.current && !force) return;
-
-    try {
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.resume();
-
-      const text = `Selamat, verifikasi data berhasil atas nama ${item.n}. Siswa dinyatakan ${item.s === 'LULUS' ? 'Lulus' : 'Tidak Lulus'}.`;
-      const utterance = new SpeechSynthesisUtterance(text);
-      
-      const voices = window.speechSynthesis.getVoices();
-      const idVoice = voices.find(v => v.lang.toLowerCase().includes('id')) || 
-                      voices.find(v => v.lang.toLowerCase().includes('en')) ||
-                      voices[0];
-      
-      if (idVoice) {
-        utterance.voice = idVoice;
-        utterance.lang = idVoice.lang;
-      } else {
-        utterance.lang = 'id-ID';
-      }
-      
-      utterance.rate = 0.95;
-      utterance.volume = 1.0;
-      utterance.pitch = 1.0;
-      
-      utterance.onstart = () => {
-        ttsPlayed.current = true;
-      };
-
-      window.speechSynthesis.speak(utterance);
-    } catch (e) {
-      console.error("Speech Synthesis Error:", e);
-    }
-  };
 
   const Card = ({ children, title, icon, color }: any) => (
     <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
