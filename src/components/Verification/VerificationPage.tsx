@@ -46,6 +46,7 @@ export function VerificationPage() {
             window.removeEventListener('touchstart', handleInteraction);
             window.removeEventListener('mousedown', handleInteraction);
             window.removeEventListener('pointerdown', handleInteraction);
+            window.removeEventListener('scroll', handleInteraction);
           }
         };
 
@@ -53,6 +54,7 @@ export function VerificationPage() {
         window.addEventListener('touchstart', handleInteraction, { once: false });
         window.addEventListener('mousedown', handleInteraction, { once: false });
         window.addEventListener('pointerdown', handleInteraction, { once: false });
+        window.addEventListener('scroll', handleInteraction, { once: false, passive: true });
         
         return () => {
           if (checkVoices) clearInterval(checkVoices);
@@ -60,6 +62,7 @@ export function VerificationPage() {
           window.removeEventListener('touchstart', handleInteraction);
           window.removeEventListener('mousedown', handleInteraction);
           window.removeEventListener('pointerdown', handleInteraction);
+          window.removeEventListener('scroll', handleInteraction);
           window.speechSynthesis.onvoiceschanged = null;
         };
       } else {
@@ -104,8 +107,10 @@ export function VerificationPage() {
         // Flag is now set at the beginning of playTTS
       };
 
-      // Small delay helped before, but now we use immediate flag setting
-      window.speechSynthesis.speak(utterance);
+      // Small delay helps browsers process cancel() and voice loading on mobile
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, 100);
     } catch (e) {
       console.error("Speech Synthesis Error:", e);
     }
