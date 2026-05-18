@@ -210,42 +210,47 @@ function TimeUnit({ value, label }: { value: number, label: string }) {
 
 function EnvelopeAnimation({ student, settings, isOpen, setIsOpen }: any) {
   useEffect(() => {
-    if (isOpen && student.status === 'LULUS') {
-      const audio = new Audio('/firework.mp3');
-      audio.play().catch(e => console.error("Audio playback error:", e));
+    if (isOpen) {
+      if (student.status === 'LULUS') {
+        const audio = new Audio('/firework.mp3');
+        audio.play().catch(e => console.error("Audio playback error:", e));
 
-      const duration = 2 * 1000;
-      const animationEnd = Date.now() + duration;
+        const duration = 2 * 1000;
+        const animationEnd = Date.now() + duration;
 
-      const particleDefaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 60 };
+        const particleDefaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 60 };
 
-      const interval: any = setInterval(function() {
-        const timeLeft = animationEnd - Date.now();
+        const interval: any = setInterval(function() {
+          const timeLeft = animationEnd - Date.now();
 
-        if (timeLeft <= 0) {
-          return clearInterval(interval);
-        }
+          if (timeLeft <= 0) {
+            return clearInterval(interval);
+          }
 
-        const particleCount = 50 * (timeLeft / duration);
-        confetti(Object.assign({}, particleDefaults, { 
-          particleCount,
-          origin: { x: Math.random() - 0.2, y: Math.random() - 0.2 }
-        }));
-        confetti(Object.assign({}, particleDefaults, { 
-          particleCount,
-          origin: { x: Math.random() + 0.2, y: Math.random() - 0.2 }
-        }));
-      }, 250);
+          const particleCount = 50 * (timeLeft / duration);
+          confetti(Object.assign({}, particleDefaults, { 
+            particleCount,
+            origin: { x: Math.random() - 0.2, y: Math.random() - 0.2 }
+          }));
+          confetti(Object.assign({}, particleDefaults, { 
+            particleCount,
+            origin: { x: Math.random() + 0.2, y: Math.random() - 0.2 }
+          }));
+        }, 250);
 
-      // Initial big pop
-      confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 },
-        zIndex: 60
-      });
+        // Initial big pop
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.6 },
+          zIndex: 60
+        });
 
-      return () => clearInterval(interval);
+        return () => clearInterval(interval);
+      } else {
+        const audio = new Audio('/failed.mp3');
+        audio.play().catch(e => console.error("Audio playback error:", e));
+      }
     }
   }, [isOpen, student.status]);
 
